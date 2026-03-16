@@ -1,0 +1,14 @@
+apiVersion: v2
+name: coffee-diary
+description: A Helm chart for Coffee Diary - an espresso note-taking app
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+maintainers:
+  - name: Oli
+keywords:
+  - coffee
+  - espresso
+  - diary
+  - spring-boot
+  - vue
