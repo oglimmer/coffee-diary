@@ -1,5 +1,6 @@
 import axios from 'axios'
 import router from '@/router'
+import { useAuthStore } from '@/stores/useAuthStore'
 
 const api = axios.create({
   baseURL: '/api',
@@ -11,7 +12,9 @@ api.interceptors.response.use(
   (error) => {
     const url = error.config?.url ?? ''
     if (error.response?.status === 401 && !url.includes('/auth/me')) {
-      router.push('/login')
+      const auth = useAuthStore()
+      auth.user = null
+      router.push({ path: '/login', query: { expired: '1' } })
     }
     return Promise.reject(error)
   },

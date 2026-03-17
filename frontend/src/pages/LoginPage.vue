@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import LegalNav from '@/components/LegalNav.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const username = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+const sessionExpired = ref(route.query.expired === '1')
 
 async function handleSubmit() {
   error.value = ''
@@ -35,6 +37,7 @@ async function handleSubmit() {
       <p class="auth-subtitle">Sign in to your account</p>
 
       <form @submit.prevent="handleSubmit" class="auth-form">
+        <div v-if="sessionExpired && !error" class="alert alert-warning">Your session has expired. Please sign in again.</div>
         <div v-if="error" class="alert alert-error">{{ error }}</div>
 
         <div class="form-group">
