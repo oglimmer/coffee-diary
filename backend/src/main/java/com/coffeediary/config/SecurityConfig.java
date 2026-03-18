@@ -26,11 +26,16 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 
+import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHttpSession;
+import org.springframework.session.web.http.CookieSerializer;
+import org.springframework.session.web.http.DefaultCookieSerializer;
+
 import java.io.IOException;
 import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
+@EnableJdbcHttpSession(maxInactiveIntervalInSeconds = 7_776_000)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -54,8 +59,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(appUserDetailsService);
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(appUserDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return new ProviderManager(provider);
     }
@@ -116,6 +120,16 @@ public class SecurityConfig {
                 .userDetailsService(appUserDetailsService);
 
         return http.build();
+    }
+
+    @Bean
+    public CookieSerializer cookieSerializer(
+            @Value("${session.cookie.secure:false}") boolean secure) {
+        DefaultCookieSerializer serializer = new DefaultCookieSerializer();
+        serializer.setCookieMaxAge((int) java.time.Duration.ofDays(90).toSeconds());
+        serializer.setUseSecureCookie(secure);
+        serializer.setSameSite("Lax");
+        return serializer;
     }
 
     @Bean

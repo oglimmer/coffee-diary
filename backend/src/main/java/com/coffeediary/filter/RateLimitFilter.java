@@ -8,6 +8,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -19,14 +20,18 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("UnstableApiUsage")
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private final LoadingCache<String, RateLimiter> rateLimiters = CacheBuilder.newBuilder()
-            .expireAfterAccess(10, TimeUnit.MINUTES)
-            .build(new CacheLoader<>() {
-                @Override
-                public RateLimiter load(String key) {
-                    return RateLimiter.create(10.0);
-                }
-            });
+    private final LoadingCache<String, RateLimiter> rateLimiters;
+
+    public RateLimitFilter(@Value("${rate-limit.requests-per-second:10.0}") double requestsPerSecond) {
+        this.rateLimiters = CacheBuilder.newBuilder()
+                .expireAfterAccess(10, TimeUnit.MINUTES)
+                .build(new CacheLoader<>() {
+                    @Override
+                    public RateLimiter load(String key) {
+                        return RateLimiter.create(requestsPerSecond);
+                    }
+                });
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,

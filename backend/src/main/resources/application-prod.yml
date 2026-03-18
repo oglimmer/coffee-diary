@@ -1,7 +1,6 @@
 server:
   forward-headers-strategy: native
-  servlet:
-    session:
-      cookie:
-        secure: true
-        same-site: lax
+
+session:
+  cookie:
+    secure: true
