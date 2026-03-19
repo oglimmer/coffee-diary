@@ -33,8 +33,22 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository;
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request,
+                                                  HttpServletRequest httpRequest,
+                                                  HttpServletResponse httpResponse) {
         UserResponse response = authService.register(request);
+
+        // Auto-login after registration
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+        securityContextRepository.saveContext(context, httpRequest, httpResponse);
+
+        log.info("User registered and logged in: {}", request.getUsername());
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
