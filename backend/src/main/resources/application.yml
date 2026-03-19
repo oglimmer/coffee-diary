@@ -1,4 +1,6 @@
 spring:
+  session:
+    timeout: 90d
   datasource:
     url: jdbc:mariadb://localhost:3306/coffeediary
     username: ${DB_USERNAME:app}
