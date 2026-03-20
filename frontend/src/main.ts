@@ -9,10 +9,9 @@ import './assets/main.css'
 
 const app = createApp(App)
 app.use(createPinia())
+app.use(router)
 
-// Restore session before router processes any route
 const auth = useAuthStore()
-auth.fetchUser().finally(() => {
-  app.use(router)
-  app.mount('#app')
-})
+auth.restoreSession()
+
+app.mount('#app')
