@@ -14,4 +14,10 @@ app.use(router)
 const auth = useAuthStore()
 auth.restoreSession()
 
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && auth.initialized) {
+    auth.fetchUser()
+  }
+})
+
 app.mount('#app')
