@@ -43,6 +43,11 @@ const router = createRouter({
       name: 'imprint',
       component: () => import('@/pages/ImprintPage.vue'),
     },
+    {
+      path: '/developer',
+      name: 'developer',
+      component: () => import('@/pages/DeveloperPage.vue'),
+    },
   ],
 })
 

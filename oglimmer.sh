@@ -522,7 +522,7 @@ execute_build() {
 
     # Build backend
     if [[ "$BUILD_BACKEND" == true ]]; then
-        build_image "backend" "backend/" "${BACKEND_IMAGES[@]}"
+        build_image "backend" "--build-arg BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) backend/" "${BACKEND_IMAGES[@]}"
     fi
 
     # Restart deployments if requested

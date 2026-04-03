@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AppHeader from '@/components/AppHeader.vue'
-import LegalNav from '@/components/LegalNav.vue'
 </script>
 
 <template>
@@ -120,7 +119,6 @@ import LegalNav from '@/components/LegalNav.vue'
         For privacy questions or requests, contact:
         <a href="mailto:oglimmer@gmail.com">oglimmer@gmail.com</a>.
       </p>
-      <LegalNav />
     </main>
   </div>
 </template>

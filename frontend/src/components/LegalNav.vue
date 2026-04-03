@@ -5,6 +5,8 @@
     <RouterLink to="/terms">Terms &amp; Conditions</RouterLink>
     <span class="sep">&middot;</span>
     <RouterLink to="/imprint">Imprint</RouterLink>
+    <span class="sep">&middot;</span>
+    <RouterLink to="/developer">Developer</RouterLink>
   </nav>
 </template>
 

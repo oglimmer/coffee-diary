@@ -3,7 +3,6 @@ import { computed, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useAppInfoStore } from '@/stores/useAppInfoStore'
-
 const auth = useAuthStore()
 const appInfo = useAppInfoStore()
 const showBootSplash = computed(() => auth.restoring && !auth.initialized)
@@ -22,10 +21,21 @@ onMounted(() => {
     </div>
   </div>
   <RouterView v-else />
-  <footer v-if="appInfo.info?.app" class="app-footer">
-    <span>{{ appInfo.info.app.name }} v{{ appInfo.info.app.version }}</span>
-    <span class="footer-sep">&middot;</span>
-    <span>Built {{ appInfo.info.build.time }}</span>
+  <footer class="app-footer">
+    <nav class="footer-nav">
+      <RouterLink to="/privacy">Privacy Policy</RouterLink>
+      <span class="footer-sep">&middot;</span>
+      <RouterLink to="/terms">Terms &amp; Conditions</RouterLink>
+      <span class="footer-sep">&middot;</span>
+      <RouterLink to="/imprint">Imprint</RouterLink>
+      <span class="footer-sep">&middot;</span>
+      <RouterLink to="/developer">Developer</RouterLink>
+    </nav>
+    <div v-if="appInfo.info?.app" class="footer-build">
+      {{ appInfo.info.app.name }} v{{ appInfo.info.app.version }}
+      <span class="footer-sep">&middot;</span>
+      Built {{ appInfo.info.build.time }}
+    </div>
   </footer>
 </template>
 
@@ -59,18 +69,47 @@ onMounted(() => {
 
 .app-footer {
   text-align: center;
-  padding: 20px 24px;
-  font-size: 11px;
-  color: var(--text-dim);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  padding: 24px 24px 20px;
   border-top: 1px solid var(--border);
   margin-top: auto;
 }
 
+.footer-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  margin-bottom: 12px;
+}
+
+.footer-nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-nav a:hover {
+  color: var(--accent);
+}
+
+.footer-nav a.router-link-active {
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.footer-build {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .footer-sep {
-  margin: 0 8px;
+  margin: 0 4px;
   opacity: 0.4;
+  color: var(--text-dim);
 }
 
 @keyframes pulse {

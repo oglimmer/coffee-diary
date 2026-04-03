@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import AppHeader from '@/components/AppHeader.vue'
-import LegalNav from '@/components/LegalNav.vue'
 </script>
 
 <template>
@@ -49,7 +48,6 @@ import LegalNav from '@/components/LegalNav.vue'
 
       <h3>Service Information</h3>
       <p>All services are provided free of charge.</p>
-      <LegalNav />
     </main>
   </div>
 </template>

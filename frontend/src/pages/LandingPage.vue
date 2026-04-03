@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/useAuthStore'
-import LegalNav from '@/components/LegalNav.vue'
 
 const auth = useAuthStore()
 
@@ -23,13 +22,12 @@ function handleLogin() {
       <p class="landing-hint">You will be redirected to our identity provider</p>
     </div>
 
-    <LegalNav />
   </div>
 </template>
 
 <style scoped>
 .landing-page {
-  min-height: 100vh;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -37,13 +35,6 @@ function handleLogin() {
   padding: 24px;
   position: relative;
   overflow: hidden;
-}
-
-.landing-page :deep(.legal-nav) {
-  position: absolute;
-  bottom: 24px;
-  border-top: none;
-  margin-top: 0;
 }
 
 .landing-ambient {

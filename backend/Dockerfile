@@ -6,11 +6,13 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o server ./cmd/server
 
 FROM alpine:3.20
+ARG BUILD_TIME=""
 RUN apk --no-cache add ca-certificates tzdata
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 COPY --from=builder /app/server .
 COPY --from=builder /app/migrations ./migrations
 USER appuser
+ENV BUILD_TIME=${BUILD_TIME}
 EXPOSE 8080
 CMD ["./server"]
