@@ -18,14 +18,11 @@ backend:
 
   resources:
     limits:
-      cpu: 1000m
-      memory: 1Gi
+      cpu: 500m
+      memory: 128Mi
     requests:
-      cpu: 250m
-      memory: 512Mi
-
-  # Java-specific settings
-  javaOpts: "-Xmx512m -Xms256m -XX:MaxMetaspaceSize=256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+      cpu: 50m
+      memory: 32Mi
 
 # Frontend configuration
 frontend:
@@ -38,6 +35,8 @@ frontend:
   service:
     type: ClusterIP
     port: 80
+
+  url: "https://coffee.oglimmer.com"
 
   resources:
     limits:
@@ -53,6 +52,12 @@ database:
   host: mariadb
   port: 3306
   name: coffeediary
+
+# OIDC configuration
+oidc:
+  issuerUrl: "https://id.oglimmer.de/realms/oglimmer"
+  clientId: "coffee-diary"
+  redirectUrl: "https://coffee.oglimmer.com/api/auth/callback"
 
 # Ingress configuration
 ingress:

@@ -5,15 +5,9 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/login',
-      name: 'login',
-      component: () => import('@/pages/LoginPage.vue'),
-      meta: { guest: true },
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: () => import('@/pages/RegisterPage.vue'),
+      path: '/landing',
+      name: 'landing',
+      component: () => import('@/pages/LandingPage.vue'),
       meta: { guest: true },
     },
     {
@@ -57,7 +51,7 @@ router.beforeEach(async (to) => {
   await auth.restoreSession()
 
   if (to.meta.auth && !auth.isAuthenticated) {
-    return '/login'
+    return '/landing'
   }
 
   if (to.meta.guest && auth.isAuthenticated) {

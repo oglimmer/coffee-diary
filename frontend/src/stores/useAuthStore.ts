@@ -12,20 +12,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   let restorePromise: Promise<void> | null = null
 
-  async function login(username: string, password: string) {
-    user.value = await authService.login(username, password)
-    initialized.value = true
+  function logout() {
+    authService.logout()
   }
 
-  async function register(username: string, password: string) {
-    user.value = await authService.register(username, password)
-    initialized.value = true
-  }
-
-  async function logout() {
-    await authService.logout()
-    user.value = null
-    initialized.value = true
+  function redirectToLogin() {
+    authService.redirectToLogin()
   }
 
   async function fetchUser() {
@@ -54,5 +46,5 @@ export const useAuthStore = defineStore('auth', () => {
     await restorePromise
   }
 
-  return { user, initialized, restoring, isAuthenticated, isReady, login, register, logout, fetchUser, restoreSession }
+  return { user, initialized, restoring, isAuthenticated, isReady, logout, redirectToLogin, fetchUser, restoreSession }
 })

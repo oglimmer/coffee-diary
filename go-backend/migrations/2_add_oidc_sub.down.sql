@@ -1,0 +1,3 @@
+ALTER TABLE users DROP KEY uk_users_oidc_sub;
+ALTER TABLE users DROP COLUMN oidc_sub;
+ALTER TABLE users MODIFY COLUMN password VARCHAR(255) NOT NULL;

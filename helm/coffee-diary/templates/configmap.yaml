@@ -8,3 +8,7 @@ data:
   database.host: {{ include "coffee-diary.database.host" . | quote }}
   database.port: {{ include "coffee-diary.database.port" . | quote }}
   database.name: {{ include "coffee-diary.database.name" . | quote }}
+  oidc.issuer-url: {{ .Values.oidc.issuerUrl | quote }}
+  oidc.client-id: {{ .Values.oidc.clientId | quote }}
+  oidc.redirect-url: {{ .Values.oidc.redirectUrl | quote }}
+  frontend.url: {{ .Values.frontend.url | quote }}

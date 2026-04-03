@@ -35,7 +35,7 @@ async function request<T>(method: string, url: string, body?: unknown, params?: 
     if (response.status === 401 && !url.includes('/auth/me')) {
       const auth = useAuthStore()
       auth.user = null
-      router.push({ path: '/login', query: { expired: '1' } })
+      router.push('/landing')
     }
     throw new Error(`${response.status} ${response.statusText}`)
   }

@@ -7,9 +7,13 @@
 .DS_Store
 Thumbs.db
 
-# Backend
+# Backend (Java - legacy)
 backend/target/
 backend/*.jar
+
+# Backend (Go)
+go-backend/server
+go-backend/tmp/
 
 # Frontend
 frontend/node_modules/

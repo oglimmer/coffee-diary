@@ -19,7 +19,7 @@ FRONTEND_DEPLOYMENT="$DEFAULT_FRONTEND_DEPLOYMENT"
 BACKEND_DEPLOYMENT="$DEFAULT_BACKEND_DEPLOYMENT"
 
 # Directories
-BACKEND_DIR="$SCRIPT_DIR/backend"
+BACKEND_DIR="$SCRIPT_DIR/go-backend"
 FRONTEND_DIR="$SCRIPT_DIR/frontend"
 
 # Default options (can be overridden by environment variables)
@@ -284,7 +284,7 @@ check_prerequisites() {
 
     # Add additional tools for release mode
     if [[ "$RELEASE_MODE" == true ]]; then
-        tools+=("mvn" "npm" "git")
+        tools+=("npm" "git")
     fi
 
     local missing_deps=()
@@ -327,13 +327,13 @@ check_prerequisites() {
 
 # Show current versions
 show_versions() {
-    # Backend version
+    # Backend version (from VERSION file or default)
     local backend_version
-    backend_version=$(mvn -q \
-        -Dexec.executable=echo \
-        -Dexec.args='${project.version}' \
-        --non-recursive exec:exec \
-        -f "$BACKEND_DIR/pom.xml")
+    if [[ -f "$BACKEND_DIR/VERSION" ]]; then
+        backend_version=$(cat "$BACKEND_DIR/VERSION")
+    else
+        backend_version="0.0.1-SNAPSHOT"
+    fi
 
     # Frontend version
     local frontend_version
@@ -522,7 +522,7 @@ execute_build() {
 
     # Build backend
     if [[ "$BUILD_BACKEND" == true ]]; then
-        build_image "backend" "backend/" "${BACKEND_IMAGES[@]}"
+        build_image "backend" "go-backend/" "${BACKEND_IMAGES[@]}"
     fi
 
     # Restart deployments if requested
@@ -564,13 +564,17 @@ execute_release() {
     done
 
     # Compute new version
-    current_version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec -f "$BACKEND_DIR/pom.xml")
+    if [[ -f "$BACKEND_DIR/VERSION" ]]; then
+        current_version=$(cat "$BACKEND_DIR/VERSION")
+    else
+        current_version="0.0.1-SNAPSHOT"
+    fi
     new_version=$(bump_version "$current_version" "$bump")
     log_info "Releasing version $new_version..."
 
-    # Update backend to release version
+    # Update backend version file
     log_info "Updating backend version to $new_version..."
-    mvn versions:set -DnewVersion="$new_version" -DgenerateBackupPoms=false -f "$BACKEND_DIR/pom.xml"
+    echo "$new_version" > "$BACKEND_DIR/VERSION"
 
     # Update frontend
     log_info "Updating frontend version to $new_version..."
@@ -578,7 +582,7 @@ execute_release() {
 
     # Commit and tag release
     log_info "Committing version changes and creating tag..."
-    git add "$BACKEND_DIR/pom.xml" "$FRONTEND_DIR/package.json" "$FRONTEND_DIR/package-lock.json"
+    git add "$BACKEND_DIR/VERSION" "$FRONTEND_DIR/package.json" "$FRONTEND_DIR/package-lock.json"
     git commit -m "Release v$new_version"
     git tag -a "v$new_version" -m "Release v$new_version"
 
@@ -591,8 +595,8 @@ execute_release() {
     # Bump backend to SNAPSHOT
     log_info "Setting backend to SNAPSHOT version..."
     snapshot="${new_version}-SNAPSHOT"
-    mvn versions:set -DnewVersion="$snapshot" -DgenerateBackupPoms=false -f "$BACKEND_DIR/pom.xml"
-    git add "$BACKEND_DIR/pom.xml"
+    echo "$snapshot" > "$BACKEND_DIR/VERSION"
+    git add "$BACKEND_DIR/VERSION"
     git commit -m "Set backend to $snapshot"
 
     log_success "Release v$new_version complete. Backend is now $snapshot."
