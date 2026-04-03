@@ -13,14 +13,14 @@ A web application for tracking espresso brewing sessions. Record your beans, equ
 
 | Layer    | Technology                                      |
 |----------|------------------------------------------------|
-| Backend  | Spring Boot 3.4, Java 21, Spring Security, JPA |
+| Backend  | Go, OIDC authentication, MariaDB               |
 | Frontend | Vue 3, TypeScript, Vite, Pinia, Vue Router     |
 | Database | MariaDB 11, Flyway migrations                  |
 | Infra    | Docker, Helm, GitHub Actions, Nginx             |
 
 ## Prerequisites
 
-- Java 21
+- Go 1.26+
 - Node.js 20.19+ or 22.12+
 - MariaDB 11
 - Docker (optional, for containerised setup)
@@ -41,8 +41,8 @@ This starts MariaDB, the backend (port 8080), and the frontend (port 3000).
 
 ```sh
 cd backend
-export DB_USERNAME=root DB_PASSWORD=secret
-./mvnw spring-boot:run
+export DB_USER=root DB_PASSWORD=secret
+go run ./cmd/server
 ```
 
 **Frontend**
@@ -65,7 +65,7 @@ The CI pipeline (`.github/workflows/build.yml`) builds and pushes Docker images 
 ## Project structure
 
 ```
-backend/     Spring Boot REST API
+backend/     Go REST API
 frontend/    Vue 3 SPA
 helm/        Kubernetes Helm chart
 ```

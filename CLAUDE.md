@@ -8,13 +8,12 @@ Coffee Diary is a full-stack web application for tracking espresso brewing sessi
 
 ## Build & Development Commands
 
-### Backend (Spring Boot 3.4, Java 21, Maven)
+### Backend (Go)
 ```bash
 cd backend
-./mvnw spring-boot:run                    # Run dev server (needs DB_USERNAME, DB_PASSWORD env vars)
-./mvnw test                               # Unit tests (excludes *IT.java)
-./mvnw verify                             # Unit + integration tests (uses TestContainers/MariaDB)
-./mvnw package -DskipTests                # Build JAR without tests
+go run ./cmd/server                       # Run dev server (see internal/config/config.go for env vars)
+go test ./...                             # Run all tests
+go build -o server ./cmd/server           # Build binary
 ```
 
 ### Frontend (Vue 3, TypeScript, Vite)
@@ -35,12 +34,11 @@ docker compose up --build                 # MariaDB (3306) + Backend (8080) + Fr
 ## Architecture
 
 ### Backend
-- **Framework:** Spring Boot 3.4 with Spring Security, Spring Data JPA, Flyway
-- **Auth:** Session-based (HTTP session, not JWT). CSRF disabled. Two security filter chains: basic auth for actuator endpoints, session auth for `/api/**`.
-- **Data isolation:** All entities scoped by `user_id`. Service methods enforce ownership via `userDetails.getId()`.
-- **Database:** MariaDB 11. Flyway migrations in `backend/src/main/resources/db/migration/`.
-- **Code style:** Lombok for boilerplate, SLF4J logging.
-- **Rate limiting:** Per-IP via Guava RateLimiter filter (configurable, default 10 req/s).
+- **Language:** Go with OIDC authentication (Keycloak)
+- **Auth:** Session-based with OIDC. Basic auth for actuator endpoints, session auth for `/api/**`.
+- **Data isolation:** All entities scoped by `user_id`.
+- **Database:** MariaDB 11. SQL migrations in `backend/migrations/`.
+- **Config:** Environment variables, defaults in `backend/internal/config/config.go`.
 
 ### Frontend
 - **Framework:** Vue 3 Composition API + TypeScript + Pinia stores + Vue Router
@@ -56,8 +54,7 @@ docker compose up --build                 # MariaDB (3306) + Backend (8080) + Fr
 - `GET /actuator/{health,info,prometheus,metrics}` — Monitoring
 
 ### Testing
-- **Backend unit tests:** Mockito-based, in `backend/src/test/java/`. Run with `./mvnw test`.
-- **Backend integration tests:** `ApiIT.java` using TestContainers (MariaDB 11). Run with `./mvnw verify`.
+- **Backend tests:** Run with `go test ./...` from `backend/`.
 - **No frontend tests** currently exist.
 
 ### Deployment

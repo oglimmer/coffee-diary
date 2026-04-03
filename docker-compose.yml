@@ -15,9 +15,11 @@ services:
     build:
       context: ./backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/coffeediary
-      SPRING_DATASOURCE_USERNAME: app
-      SPRING_DATASOURCE_PASSWORD: app
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: coffeediary
+      DB_USER: app
+      DB_PASSWORD: app
       ACTUATOR_USERNAME: actuator
       ACTUATOR_PASSWORD: changeme
     ports:

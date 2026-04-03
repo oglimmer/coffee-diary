@@ -19,7 +19,7 @@ FRONTEND_DEPLOYMENT="$DEFAULT_FRONTEND_DEPLOYMENT"
 BACKEND_DEPLOYMENT="$DEFAULT_BACKEND_DEPLOYMENT"
 
 # Directories
-BACKEND_DIR="$SCRIPT_DIR/go-backend"
+BACKEND_DIR="$SCRIPT_DIR/backend"
 FRONTEND_DIR="$SCRIPT_DIR/frontend"
 
 # Default options (can be overridden by environment variables)
@@ -522,7 +522,7 @@ execute_build() {
 
     # Build backend
     if [[ "$BUILD_BACKEND" == true ]]; then
-        build_image "backend" "go-backend/" "${BACKEND_IMAGES[@]}"
+        build_image "backend" "backend/" "${BACKEND_IMAGES[@]}"
     fi
 
     # Restart deployments if requested
