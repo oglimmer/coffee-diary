@@ -13,6 +13,7 @@ export const useAuthStore = defineStore('auth', () => {
   let restorePromise: Promise<void> | null = null
 
   function logout() {
+    user.value = null
     authService.logout()
   }
 
@@ -23,10 +24,9 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchUser() {
     try {
       user.value = await authService.getMe()
-    } catch {
+    } catch (error) {
+      console.warn('Session restore failed:', error)
       user.value = null
-    } finally {
-      initialized.value = true
     }
   }
 
@@ -38,6 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!restorePromise) {
       restoring.value = true
       restorePromise = fetchUser().finally(() => {
+        initialized.value = true
         restoring.value = false
         restorePromise = null
       })
