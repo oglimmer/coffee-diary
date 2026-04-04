@@ -3,6 +3,7 @@ import SwiftUI
 
 struct LoginView: View {
     var authViewModel: AuthViewModel
+    @Environment(\.colorScheme) private var colorScheme
     @State private var window: UIWindow?
 
     var body: some View {
@@ -29,7 +30,7 @@ struct LoginView: View {
                     await authViewModel.loginWithApple(result: result)
                 }
             }
-            .signInWithAppleButtonStyle(.whiteOutline)
+            .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
             .frame(maxWidth: .infinity)
             .frame(height: 50)
             .clipShape(RoundedRectangle(cornerRadius: 12))

@@ -33,6 +33,7 @@ HELP=false
 PLATFORM="${PLATFORM:-arm64}"
 RELEASE_MODE=false
 SHOW_VERSIONS=false
+E2E_MODE=false
 
 # Color output (only if terminal supports it)
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1; then
@@ -98,6 +99,7 @@ COMMANDS:
     build               Build and deploy components (default)
     release             Create a new release with version bumping and build
     show                Show current backend and frontend versions
+    e2e                 Run Playwright e2e tests (starts DB + backend, runs tests, tears down)
 
 BUILD OPTIONS:
     -f, --frontend          Build and deploy frontend only
@@ -128,6 +130,7 @@ EXAMPLES:
     ${SCRIPT_NAME} build -b -v                              # Build and deploy backend with verbose output
     ${SCRIPT_NAME} release                                  # Create a new release with version bump and build
     ${SCRIPT_NAME} show                                     # Show current versions
+    ${SCRIPT_NAME} e2e                                      # Run e2e tests with fresh DB
     ${SCRIPT_NAME} build --registries my-registry.com       # Use custom registry
     ${SCRIPT_NAME} build --platform amd64                   # Build for AMD64 only
 
@@ -158,6 +161,10 @@ parse_args() {
                 ;;
             show)
                 SHOW_VERSIONS=true
+                shift
+                ;;
+            e2e)
+                E2E_MODE=true
                 shift
                 ;;
             help|-h|--help)
@@ -602,6 +609,97 @@ execute_release() {
     log_success "Release v$new_version complete. Backend is now $snapshot."
 }
 
+# Execute e2e test process
+execute_e2e() {
+    local db_container="coffee-diary-e2e-db"
+    local db_port="3307"
+    local backend_pid=""
+    local exit_code=0
+
+    # Cleanup function — always runs on exit
+    cleanup_e2e() {
+        log_info "Tearing down e2e environment..."
+        if [[ -n "$backend_pid" ]] && kill -0 "$backend_pid" 2>/dev/null; then
+            kill "$backend_pid" 2>/dev/null
+            wait "$backend_pid" 2>/dev/null || true
+            log_info "Backend stopped"
+        fi
+        if docker inspect "$db_container" &>/dev/null; then
+            docker rm -f "$db_container" >/dev/null 2>&1
+            log_info "Database container removed"
+        fi
+    }
+    trap cleanup_e2e EXIT
+
+    # 1. Start fresh MariaDB container
+    log_info "Starting fresh MariaDB on port $db_port..."
+    docker rm -f "$db_container" 2>/dev/null || true
+    docker run -d \
+        --name "$db_container" \
+        -p "$db_port:3306" \
+        -e MARIADB_ROOT_PASSWORD=root \
+        -e MARIADB_DATABASE=coffeediary_e2e \
+        -e MARIADB_USER=app \
+        -e MARIADB_PASSWORD=app \
+        mariadb:11 >/dev/null
+
+    # 2. Wait for MariaDB to be ready
+    log_info "Waiting for MariaDB to be ready..."
+    local retries=30
+    while ! docker exec "$db_container" mariadb -uroot -proot -e "SELECT 1" &>/dev/null; do
+        retries=$((retries - 1))
+        if [[ $retries -le 0 ]]; then
+            log_error "MariaDB failed to start"
+            exit 1
+        fi
+        sleep 1
+    done
+    log_success "MariaDB is ready"
+
+    # 3. Start backend with test config
+    log_info "Starting backend..."
+    (
+        cd "$BACKEND_DIR"
+        DB_PORT="$db_port" \
+        DB_NAME="coffeediary_e2e" \
+        OIDC_ISSUER_URL="https://id.oglimmer.de/realms/playwright-tests" \
+        OIDC_CLIENT_ID="test" \
+        OIDC_CLIENT_SECRET="3VEZSovF5lkiurjJFsDgW61JCkd8UTdY" \
+        go run ./cmd/server
+    ) &
+    backend_pid=$!
+
+    # 4. Wait for backend health check
+    log_info "Waiting for backend to be ready..."
+    retries=30
+    while ! curl -sf http://localhost:8080/actuator/health >/dev/null 2>&1; do
+        if ! kill -0 "$backend_pid" 2>/dev/null; then
+            log_error "Backend process died"
+            exit 1
+        fi
+        retries=$((retries - 1))
+        if [[ $retries -le 0 ]]; then
+            log_error "Backend failed to start"
+            exit 1
+        fi
+        sleep 1
+    done
+    log_success "Backend is ready"
+
+    # 5. Run Playwright tests
+    log_info "Running Playwright e2e tests..."
+    (cd "$FRONTEND_DIR" && npx playwright test) || exit_code=$?
+
+    if [[ $exit_code -eq 0 ]]; then
+        log_success "All e2e tests passed"
+    else
+        log_error "E2e tests failed (exit code: $exit_code)"
+    fi
+
+    # Cleanup happens via trap
+    exit "$exit_code"
+}
+
 # Main execution function
 main() {
     # Show help if no arguments provided
@@ -619,6 +717,11 @@ main() {
 
     if [[ "$SHOW_VERSIONS" == true ]]; then
         show_versions
+        exit 0
+    fi
+
+    if [[ "$E2E_MODE" == true ]]; then
+        execute_e2e
         exit 0
     fi
 

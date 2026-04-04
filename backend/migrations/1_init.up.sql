@@ -1,51 +1,46 @@
--- This migration is a no-op baseline for databases that were previously managed by Flyway.
--- The tables (users, sieves, coffees, diary_entries) already exist from Flyway V1-V4.
--- golang-migrate will record this as applied without changing anything.
---
--- For fresh databases (e.g. local dev), run the seed script below first:
---
--- CREATE TABLE IF NOT EXISTS users (
---     id         BIGINT       NOT NULL AUTO_INCREMENT,
---     username   VARCHAR(255) NOT NULL,
---     password   VARCHAR(255) NOT NULL,
---     created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
---     PRIMARY KEY (id),
---     UNIQUE KEY uk_users_username (username)
--- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
---
--- CREATE TABLE IF NOT EXISTS sieves (
---     id      BIGINT       NOT NULL AUTO_INCREMENT,
---     name    VARCHAR(255) NOT NULL,
---     user_id BIGINT       NOT NULL,
---     PRIMARY KEY (id),
---     CONSTRAINT fk_sieves_user FOREIGN KEY (user_id) REFERENCES users (id)
--- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
---
--- CREATE TABLE IF NOT EXISTS coffees (
---     id      BIGINT       NOT NULL AUTO_INCREMENT,
---     name    VARCHAR(255) NOT NULL,
---     user_id BIGINT       NOT NULL,
---     PRIMARY KEY (id),
---     CONSTRAINT fk_coffees_user FOREIGN KEY (user_id) REFERENCES users (id)
--- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
---
--- CREATE TABLE IF NOT EXISTS diary_entries (
---     id            BIGINT   NOT NULL AUTO_INCREMENT,
---     user_id       BIGINT   NOT NULL,
---     date_time     DATETIME NOT NULL,
---     sieve_id      BIGINT,
---     temperature   INT      NOT NULL DEFAULT 93,
---     coffee_id     BIGINT,
---     grind_size    DOUBLE,
---     input_weight  DOUBLE,
---     output_weight DOUBLE,
---     time_seconds  INT,
---     rating        INT,
---     notes         TEXT,
---     PRIMARY KEY (id),
---     CONSTRAINT fk_diary_entries_user   FOREIGN KEY (user_id)  REFERENCES users (id),
---     CONSTRAINT fk_diary_entries_sieve  FOREIGN KEY (sieve_id) REFERENCES sieves (id),
---     CONSTRAINT fk_diary_entries_coffee FOREIGN KEY (coffee_id) REFERENCES coffees (id)
--- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Baseline schema: creates all tables if they don't exist.
+-- Safe for existing databases (Flyway-managed) because of IF NOT EXISTS.
 
-SELECT 1;
+CREATE TABLE IF NOT EXISTS users (
+    id         BIGINT       NOT NULL AUTO_INCREMENT,
+    username   VARCHAR(255) NOT NULL,
+    password   VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_users_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS sieves (
+    id      BIGINT       NOT NULL AUTO_INCREMENT,
+    name    VARCHAR(255) NOT NULL,
+    user_id BIGINT       NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_sieves_user FOREIGN KEY (user_id) REFERENCES users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS coffees (
+    id      BIGINT       NOT NULL AUTO_INCREMENT,
+    name    VARCHAR(255) NOT NULL,
+    user_id BIGINT       NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_coffees_user FOREIGN KEY (user_id) REFERENCES users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS diary_entries (
+    id            BIGINT   NOT NULL AUTO_INCREMENT,
+    user_id       BIGINT   NOT NULL,
+    date_time     DATETIME NOT NULL,
+    sieve_id      BIGINT,
+    temperature   INT      NOT NULL DEFAULT 93,
+    coffee_id     BIGINT,
+    grind_size    DOUBLE,
+    input_weight  DOUBLE,
+    output_weight DOUBLE,
+    time_seconds  INT,
+    rating        INT,
+    notes         TEXT,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_diary_entries_user   FOREIGN KEY (user_id)  REFERENCES users (id),
+    CONSTRAINT fk_diary_entries_sieve  FOREIGN KEY (sieve_id) REFERENCES sieves (id),
+    CONSTRAINT fk_diary_entries_coffee FOREIGN KEY (coffee_id) REFERENCES coffees (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
