@@ -26,6 +26,7 @@ type Config struct {
 	OIDCClientSecret string
 	OIDCRedirectURL  string
 	FrontendURL      string
+	AppleClientID    string
 }
 
 func Load() *Config {
@@ -49,6 +50,7 @@ func Load() *Config {
 		OIDCClientSecret: os.Getenv("OIDC_CLIENT_SECRET"),
 		OIDCRedirectURL:  envOrDefault("OIDC_REDIRECT_URL", "http://localhost:8080/api/auth/callback"),
 		FrontendURL:      envOrDefault("FRONTEND_URL", "http://localhost:5173"),
+		AppleClientID:    envOrDefault("APPLE_CLIENT_ID", "com.oglimmer.CoffeeDiary"),
 	}
 }
 

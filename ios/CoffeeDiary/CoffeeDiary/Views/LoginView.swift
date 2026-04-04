@@ -1,3 +1,4 @@
+import AuthenticationServices
 import SwiftUI
 
 struct LoginView: View {
@@ -20,6 +21,18 @@ struct LoginView: View {
                 .foregroundStyle(.secondary)
 
             Spacer()
+
+            SignInWithAppleButton(.signIn) { request in
+                request.requestedScopes = [.fullName, .email]
+            } onCompletion: { result in
+                Task {
+                    await authViewModel.loginWithApple(result: result)
+                }
+            }
+            .signInWithAppleButtonStyle(.whiteOutline)
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
 
             Button {
                 guard let window else { return }

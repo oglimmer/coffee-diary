@@ -56,6 +56,24 @@ final class AuthService {
         api.setSessionCookie(cookieValue)
     }
 
+    /// Sends the Apple identity token to the backend for verification and session creation.
+    func loginWithApple(identityToken: Data, fullName: String?) async throws {
+        guard let tokenString = String(data: identityToken, encoding: .utf8) else {
+            throw APIError.badRequest("Invalid identity token")
+        }
+
+        struct AppleLoginRequest: Encodable {
+            let identityToken: String
+            let fullName: String?
+        }
+
+        let _: User = try await api.request(
+            "POST",
+            path: "/api/auth/apple-callback",
+            body: AppleLoginRequest(identityToken: tokenString, fullName: fullName)
+        )
+    }
+
     func checkSession() async -> User? {
         try? await api.request("GET", path: "/api/auth/me")
     }

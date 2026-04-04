@@ -23,6 +23,7 @@ type AuthHandler struct {
 	authService        *service.AuthService
 	oauth2Config       *oauth2.Config
 	verifier           *oidc.IDTokenVerifier
+	appleVerifier      *oidc.IDTokenVerifier
 	store              sessions.Store
 	frontendURL        string
 	endSessionEndpoint string
@@ -32,6 +33,7 @@ func NewAuthHandler(
 	authService *service.AuthService,
 	oauth2Config *oauth2.Config,
 	verifier *oidc.IDTokenVerifier,
+	appleVerifier *oidc.IDTokenVerifier,
 	store sessions.Store,
 	frontendURL string,
 	endSessionEndpoint string,
@@ -40,6 +42,7 @@ func NewAuthHandler(
 		authService:        authService,
 		oauth2Config:       oauth2Config,
 		verifier:           verifier,
+		appleVerifier:      appleVerifier,
 		store:              store,
 		frontendURL:        frontendURL,
 		endSessionEndpoint: endSessionEndpoint,
@@ -162,6 +165,75 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, h.frontendURL, http.StatusFound)
+}
+
+// AppleCallback handles Sign in with Apple token verification.
+func (h *AuthHandler) AppleCallback(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		IdentityToken string `json:"identityToken"`
+		FullName      string `json:"fullName"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		apperr.WriteError(w, apperr.BadRequest("Invalid request body"))
+		return
+	}
+
+	if req.IdentityToken == "" {
+		apperr.WriteError(w, apperr.BadRequest("identityToken is required"))
+		return
+	}
+
+	// Verify Apple identity token using OIDC discovery
+	idToken, err := h.appleVerifier.Verify(r.Context(), req.IdentityToken)
+	if err != nil {
+		slog.Error("Apple token verification failed", "error", err)
+		apperr.WriteError(w, apperr.Unauthorized("Authentication failed"))
+		return
+	}
+
+	var claims struct {
+		Sub   string `json:"sub"`
+		Email string `json:"email"`
+	}
+	if err := idToken.Claims(&claims); err != nil {
+		slog.Error("failed to parse Apple claims", "error", err)
+		apperr.WriteError(w, apperr.InternalError())
+		return
+	}
+
+	username := req.FullName
+	if username == "" {
+		username = claims.Email
+	}
+	if username == "" {
+		username = claims.Sub
+	}
+
+	// Prefix sub to distinguish Apple users from Keycloak users
+	appleSub := "apple:" + claims.Sub
+
+	user, err := h.authService.FindOrCreateByOIDC(r.Context(), appleSub, username)
+	if err != nil {
+		slog.Error("failed to find/create user", "error", err)
+		apperr.WriteError(w, apperr.InternalError())
+		return
+	}
+
+	sess, _ := h.store.Get(r, sessionName)
+	sess.Values["userID"] = user.ID
+	if err := sess.Save(r, w); err != nil {
+		slog.Error("failed to save session", "error", err)
+		apperr.WriteError(w, apperr.InternalError())
+		return
+	}
+
+	slog.Info("user logged in via Apple", "username", user.Username, "id", user.ID)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(domain.UserResponse{
+		ID:       user.ID,
+		Username: user.Username,
+	})
 }
 
 // Logout clears the local session and redirects to Keycloak's end_session_endpoint.

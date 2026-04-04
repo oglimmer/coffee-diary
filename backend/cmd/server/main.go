@@ -76,6 +76,14 @@ func main() {
 
 	verifier := provider.Verifier(&oidc.Config{ClientID: cfg.OIDCClientID})
 
+	// Apple Sign in with Apple OIDC provider
+	appleProvider, err := oidc.NewProvider(ctx, "https://appleid.apple.com")
+	if err != nil {
+		slog.Error("failed to create Apple OIDC provider", "error", err)
+		os.Exit(1)
+	}
+	appleVerifier := appleProvider.Verifier(&oidc.Config{ClientID: cfg.AppleClientID})
+
 	// Discover end_session_endpoint from provider
 	var providerClaims struct {
 		EndSessionEndpoint string `json:"end_session_endpoint"`
@@ -107,7 +115,7 @@ func main() {
 	entrySvc := service.NewDiaryEntryService(entryRepo, coffeeRepo, sieveRepo)
 
 	// Handlers
-	authH := handler.NewAuthHandler(authSvc, oauth2Config, verifier, store, cfg.FrontendURL, providerClaims.EndSessionEndpoint)
+	authH := handler.NewAuthHandler(authSvc, oauth2Config, verifier, appleVerifier, store, cfg.FrontendURL, providerClaims.EndSessionEndpoint)
 	coffeeH := handler.NewCoffeeHandler(coffeeSvc)
 	sieveH := handler.NewSieveHandler(sieveSvc)
 	entryH := handler.NewDiaryEntryHandler(entrySvc)
@@ -124,6 +132,7 @@ func main() {
 		r.Get("/login", authH.Login)
 		r.Get("/callback", authH.Callback)
 		r.Get("/logout", authH.Logout)
+		r.Post("/apple-callback", authH.AppleCallback)
 		r.Get("/me", authH.Me)
 	})
 
