@@ -49,10 +49,21 @@ struct LoginView: View {
             .controlSize(.large)
 
             if let error = authViewModel.error {
-                Text(error)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .multilineTextAlignment(.center)
+                VStack(spacing: 6) {
+                    Text(error.message)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+
+                    if let detail = error.detail {
+                        Text(detail)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding()
+                .background(.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
             }
         }
         .padding(32)

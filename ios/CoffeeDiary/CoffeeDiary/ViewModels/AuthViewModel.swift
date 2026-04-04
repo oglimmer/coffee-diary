@@ -1,11 +1,16 @@
 import AuthenticationServices
 import SwiftUI
 
+struct LoginError {
+    let message: String
+    let detail: String?
+}
+
 @Observable
 final class AuthViewModel {
     var user: User?
     var isLoading = true
-    var error: String?
+    var error: LoginError?
 
     var isAuthenticated: Bool { user != nil }
 
@@ -22,8 +27,13 @@ final class AuthViewModel {
         do {
             try await authService.login(anchor: anchor)
             user = await authService.checkSession()
+        } catch let error as ASWebAuthenticationSessionError where error.code == .canceledLogin {
+            // User cancelled — not an error, just do nothing
         } catch {
-            self.error = error.localizedDescription
+            self.error = LoginError(
+                message: "Sign-in failed. Please check your connection and try again.",
+                detail: error.localizedDescription
+            )
         }
     }
 
@@ -33,7 +43,17 @@ final class AuthViewModel {
             guard case .success(let authorization) = result,
                   let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
                   let identityToken = credential.identityToken else {
-                self.error = "Apple Sign-In failed"
+                if case .failure(let resultError) = result {
+                    let nsError = resultError as NSError
+                    if nsError.domain == ASAuthorizationError.errorDomain,
+                       nsError.code == ASAuthorizationError.canceled.rawValue {
+                        return // User cancelled — not an error
+                    }
+                }
+                self.error = LoginError(
+                    message: "Apple Sign-In failed. Please try again.",
+                    detail: nil
+                )
                 return
             }
 
@@ -48,7 +68,10 @@ final class AuthViewModel {
             try await authService.loginWithApple(identityToken: identityToken, fullName: fullName)
             user = await authService.checkSession()
         } catch {
-            self.error = error.localizedDescription
+            self.error = LoginError(
+                message: "Apple Sign-In failed. Please check your connection and try again.",
+                detail: error.localizedDescription
+            )
         }
     }
 
