@@ -13,6 +13,7 @@ type LocalDateTime struct {
 }
 
 const localDateTimeFormat = "2006-01-02T15:04:05"
+const localDateTimeFormatNoSeconds = "2006-01-02T15:04"
 
 func (t LocalDateTime) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Time.Format(localDateTimeFormat))
@@ -25,7 +26,10 @@ func (t *LocalDateTime) UnmarshalJSON(b []byte) error {
 	}
 	parsed, err := time.Parse(localDateTimeFormat, s)
 	if err != nil {
-		return err
+		parsed, err = time.Parse(localDateTimeFormatNoSeconds, s)
+		if err != nil {
+			return err
+		}
 	}
 	t.Time = parsed
 	return nil
