@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gorilla/sessions"
@@ -56,6 +57,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	sess, _ := h.store.Get(r, sessionName)
 	sess.Values["oauth_state"] = state
+
+	// Allow mobile clients to specify a custom redirect after login (e.g. coffeeDiary://auth/callback)
+	if redirectAfter := r.URL.Query().Get("redirect_after"); redirectAfter != "" {
+		sess.Values["redirect_after"] = redirectAfter
+	}
+
 	if err := sess.Save(r, w); err != nil {
 		slog.Error("failed to save session", "error", err)
 		apperr.WriteError(w, apperr.InternalError())
@@ -125,6 +132,10 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Extract mobile redirect before overwriting session values
+	redirectAfter, _ := sess.Values["redirect_after"].(string)
+	delete(sess.Values, "redirect_after")
+
 	sess.Values["userID"] = user.ID
 	sess.Values["id_token"] = rawIDToken
 	if err := sess.Save(r, w); err != nil {
@@ -134,6 +145,22 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	slog.Info("user logged in via OIDC", "username", user.Username, "id", user.ID)
+
+	// For mobile clients: redirect to custom scheme with session cookie value
+	if redirectAfter != "" && strings.HasPrefix(redirectAfter, "coffeeDiary://") {
+		var sessionCookie string
+		for _, c := range w.Header()["Set-Cookie"] {
+			if strings.HasPrefix(c, sessionName+"=") {
+				parts := strings.SplitN(c, ";", 2)
+				sessionCookie = strings.TrimPrefix(parts[0], sessionName+"=")
+				break
+			}
+		}
+		redirectURL := redirectAfter + "?session_cookie=" + url.QueryEscape(sessionCookie)
+		http.Redirect(w, r, redirectURL, http.StatusFound)
+		return
+	}
+
 	http.Redirect(w, r, h.frontendURL, http.StatusFound)
 }
 
