@@ -1,4 +1,6 @@
 FROM node:22-alpine AS builder
+ARG GIT_COMMIT="unknown"
+ENV VITE_GIT_COMMIT=${GIT_COMMIT}
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci

@@ -517,12 +517,12 @@ execute_build() {
 
     # Build frontend
     if [[ "$BUILD_FRONTEND" == true ]]; then
-        build_image "frontend" "frontend/" "${FRONTEND_IMAGES[@]}"
+        build_image "frontend" "--build-arg GIT_COMMIT=$(git rev-parse --short HEAD) frontend/" "${FRONTEND_IMAGES[@]}"
     fi
 
     # Build backend
     if [[ "$BUILD_BACKEND" == true ]]; then
-        build_image "backend" "--build-arg BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) backend/" "${BACKEND_IMAGES[@]}"
+        build_image "backend" "--build-arg BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) --build-arg GIT_COMMIT=$(git rev-parse --short HEAD) backend/" "${BACKEND_IMAGES[@]}"
     fi
 
     # Restart deployments if requested

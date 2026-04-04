@@ -6,6 +6,9 @@ export interface AppInfo {
   build: {
     time: string
   }
+  git: {
+    commit: string
+  }
 }
 
 export const appInfoService = {

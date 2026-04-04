@@ -35,6 +35,9 @@ func (h *ActuatorHandler) Info(w http.ResponseWriter, r *http.Request) {
 		"build": map[string]string{
 			"time": h.cfg.BuildTime,
 		},
+		"git": map[string]string{
+			"commit": h.cfg.GitCommit,
+		},
 	})
 }
 

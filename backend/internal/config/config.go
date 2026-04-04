@@ -18,6 +18,7 @@ type Config struct {
 	AppName          string
 	AppVersion       string
 	BuildTime        string
+	GitCommit        string
 	SessionSecret    string
 	CookieSecure     bool
 	OIDCIssuerURL    string
@@ -40,6 +41,7 @@ func Load() *Config {
 		AppName:          envOrDefault("APP_NAME", "coffee-diary-backend"),
 		AppVersion:       envOrDefault("APP_VERSION", "0.0.1-SNAPSHOT"),
 		BuildTime:        envOrDefault("BUILD_TIME", "unknown"),
+		GitCommit:        envOrDefault("GIT_COMMIT", "unknown"),
 		SessionSecret:    envOrDefault("SESSION_SECRET", "change-me-in-production-32chars!"),
 		CookieSecure:     envOrDefault("COOKIE_SECURE", "false") == "true",
 		OIDCIssuerURL:    envOrDefault("OIDC_ISSUER_URL", "https://id.oglimmer.de/realms/oglimmer"),
