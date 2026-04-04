@@ -3,6 +3,9 @@
 .vscode/
 *.iml
 
+# Xcode
+xcuserdata/
+
 # OS
 .DS_Store
 Thumbs.db
