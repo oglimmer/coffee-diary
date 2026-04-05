@@ -21,26 +21,26 @@ struct DiaryEntryRow: View {
             }
 
             HStack(spacing: 12) {
-                if let sieveName = entry.sieveName {
-                    Label(sieveName, systemImage: "line.3.horizontal.decrease")
+                if let grindSize = entry.grindSize {
+                    Label(formatNumber(grindSize), systemImage: "gearshape")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Label("\(entry.temperature)\u{00B0}C", systemImage: "thermometer.medium")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if entry.inputWeight != nil || entry.outputWeight != nil {
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.right")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text(weightFlow)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 if let time = entry.timeSeconds {
                     Label("\(time)s", systemImage: "timer")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-            }
-
-            if let notes = entry.notes, !notes.isEmpty {
-                Text(notes)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
             }
         }
         .padding(.vertical, 4)
@@ -49,6 +49,18 @@ struct DiaryEntryRow: View {
     private var formattedDate: String {
         guard let date = entry.parsedDate else { return entry.dateTime }
         return date.formatted(date: .abbreviated, time: .shortened)
+    }
+
+    private var weightFlow: String {
+        let input = entry.inputWeight.map { formatNumber($0) + "g" } ?? "?"
+        let output = entry.outputWeight.map { formatNumber($0) + "g" } ?? "?"
+        return "\(input) → \(output)"
+    }
+
+    private func formatNumber(_ value: Double) -> String {
+        value.truncatingRemainder(dividingBy: 1) == 0
+            ? String(format: "%.0f", value)
+            : String(format: "%.1f", value)
     }
 }
 
