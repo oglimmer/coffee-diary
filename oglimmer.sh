@@ -34,6 +34,7 @@ PLATFORM="${PLATFORM:-arm64}"
 RELEASE_MODE=false
 SHOW_VERSIONS=false
 E2E_MODE=false
+COPY_DB_MODE=false
 
 # Color output (only if terminal supports it)
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1; then
@@ -100,6 +101,7 @@ COMMANDS:
     release             Create a new release with version bumping and build
     show                Show current backend and frontend versions
     e2e                 Run Playwright e2e tests (starts DB + backend, runs tests, tears down)
+    copy-db             Copy production database to local Docker Compose MariaDB
 
 BUILD OPTIONS:
     -f, --frontend          Build and deploy frontend only
@@ -131,6 +133,7 @@ EXAMPLES:
     ${SCRIPT_NAME} release                                  # Create a new release with version bump and build
     ${SCRIPT_NAME} show                                     # Show current versions
     ${SCRIPT_NAME} e2e                                      # Run e2e tests with fresh DB
+    ${SCRIPT_NAME} copy-db                                   # Copy prod DB to local (requires PROD_DB_PASSWORD)
     ${SCRIPT_NAME} build --registries my-registry.com       # Use custom registry
     ${SCRIPT_NAME} build --platform amd64                   # Build for AMD64 only
 
@@ -143,6 +146,7 @@ ENVIRONMENT VARIABLES:
     DRY_RUN                 Enable dry-run mode (true/false)
     PUSH                    Enable/disable pushing to registry (true/false)
     RESTART                 Enable/disable Kubernetes restart (true/false)
+    PROD_DB_PASSWORD        Production MariaDB root password (required for copy-db)
 
 EOF
 }
@@ -165,6 +169,10 @@ parse_args() {
                 ;;
             e2e)
                 E2E_MODE=true
+                shift
+                ;;
+            copy-db)
+                COPY_DB_MODE=true
                 shift
                 ;;
             help|-h|--help)
@@ -279,7 +287,7 @@ parse_args() {
     fi
 
     # If no component specified for build mode, build both
-    if [[ "$RELEASE_MODE" == false && "$SHOW_VERSIONS" == false && "$BUILD_FRONTEND" == false && "$BUILD_BACKEND" == false ]]; then
+    if [[ "$RELEASE_MODE" == false && "$SHOW_VERSIONS" == false && "$COPY_DB_MODE" == false && "$BUILD_FRONTEND" == false && "$BUILD_BACKEND" == false ]]; then
         BUILD_FRONTEND=true
         BUILD_BACKEND=true
     fi
@@ -700,6 +708,50 @@ execute_e2e() {
     exit "$exit_code"
 }
 
+# Execute copy-db process: dump prod DB and import into local Docker Compose MariaDB
+execute_copy_db() {
+    local prod_db_password="${PROD_DB_PASSWORD:-}"
+    local prod_db_name="coffeediary"
+    local local_container="coffee-diary-db-1"
+    local local_db_name="coffeediary"
+    local dump_file
+
+    if [[ -z "$prod_db_password" ]]; then
+        log_error "PROD_DB_PASSWORD environment variable is required"
+        echo "Usage: PROD_DB_PASSWORD=<password> ${SCRIPT_NAME} copy-db" >&2
+        exit 1
+    fi
+
+    # Verify local DB container is running
+    if ! docker inspect "$local_container" &>/dev/null; then
+        log_error "Local DB container '$local_container' is not running. Start it with: docker compose up -d db"
+        exit 1
+    fi
+
+    dump_file=$(mktemp /tmp/coffee-diary-prod-dump.XXXXXX.sql)
+    trap "rm -f '$dump_file'" EXIT
+
+    # Dump production database via kubectl
+    log_info "Dumping production database..."
+    if ! kubectl exec -i mariadb-0 -- mariadb-dump -u root -p"$prod_db_password" --single-transaction "$prod_db_name" > "$dump_file"; then
+        log_error "Failed to dump production database"
+        exit 1
+    fi
+
+    local dump_size
+    dump_size=$(wc -c < "$dump_file" | xargs)
+    log_success "Production dump complete (${dump_size} bytes)"
+
+    # Import into local container
+    log_info "Importing into local database..."
+    if ! docker exec -i "$local_container" mariadb -u root -proot "$local_db_name" < "$dump_file"; then
+        log_error "Failed to import dump into local database"
+        exit 1
+    fi
+
+    log_success "Production database copied to local successfully"
+}
+
 # Main execution function
 main() {
     # Show help if no arguments provided
@@ -722,6 +774,11 @@ main() {
 
     if [[ "$E2E_MODE" == true ]]; then
         execute_e2e
+        exit 0
+    fi
+
+    if [[ "$COPY_DB_MODE" == true ]]; then
+        execute_copy_db
         exit 0
     fi
 
