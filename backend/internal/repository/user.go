@@ -29,6 +29,55 @@ func (r *UserRepository) FindByID(ctx context.Context, id int64) (*domain.User, 
 	return u, err
 }
 
+// GetAppleRefreshToken returns the stored Apple refresh token for a user, or "" if none.
+func (r *UserRepository) GetAppleRefreshToken(ctx context.Context, id int64) (string, error) {
+	var token sql.NullString
+	err := r.db.QueryRowContext(ctx,
+		"SELECT apple_refresh_token FROM users WHERE id = ?", id,
+	).Scan(&token)
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return token.String, nil
+}
+
+// SetAppleRefreshToken stores (or clears) the Apple refresh token for a user.
+func (r *UserRepository) SetAppleRefreshToken(ctx context.Context, id int64, token string) error {
+	var val sql.NullString
+	if token != "" {
+		val = sql.NullString{String: token, Valid: true}
+	}
+	_, err := r.db.ExecContext(ctx,
+		"UPDATE users SET apple_refresh_token = ? WHERE id = ?", val, id,
+	)
+	return err
+}
+
+// DeleteUserCascade removes the user and all owned data in a single transaction.
+func (r *UserRepository) DeleteUserCascade(ctx context.Context, id int64) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	statements := []string{
+		"DELETE FROM diary_entries WHERE user_id = ?",
+		"DELETE FROM coffees WHERE user_id = ?",
+		"DELETE FROM sieves WHERE user_id = ?",
+		"DELETE FROM users WHERE id = ?",
+	}
+	for _, stmt := range statements {
+		if _, err := tx.ExecContext(ctx, stmt, id); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
 func (r *UserRepository) FindByOIDCSub(ctx context.Context, sub string) (*domain.User, error) {
 	u := &domain.User{}
 	var oidcSub sql.NullString

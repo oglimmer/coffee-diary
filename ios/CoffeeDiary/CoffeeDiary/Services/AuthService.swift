@@ -56,22 +56,36 @@ final class AuthService {
         api.setSessionCookie(cookieValue)
     }
 
-    /// Sends the Apple identity token to the backend for verification and session creation.
-    func loginWithApple(identityToken: Data, fullName: String?) async throws {
+    /// Sends the Apple identity token and authorization code to the backend for verification
+    /// and session creation. The authorization code is required so the backend can obtain a
+    /// refresh token and revoke it at account deletion (App Store Guideline 5.1.1(v)).
+    func loginWithApple(identityToken: Data, authorizationCode: Data?, fullName: String?) async throws {
         guard let tokenString = String(data: identityToken, encoding: .utf8) else {
             throw APIError.badRequest("Invalid identity token")
         }
+        let codeString = authorizationCode.flatMap { String(data: $0, encoding: .utf8) }
 
         struct AppleLoginRequest: Encodable {
             let identityToken: String
+            let authorizationCode: String?
             let fullName: String?
         }
 
         let _: User = try await api.request(
             "POST",
             path: "/api/auth/apple-callback",
-            body: AppleLoginRequest(identityToken: tokenString, fullName: fullName)
+            body: AppleLoginRequest(
+                identityToken: tokenString,
+                authorizationCode: codeString,
+                fullName: fullName
+            )
         )
+    }
+
+    /// Permanently deletes the authenticated user's account and all their data.
+    func deleteAccount() async throws {
+        try await api.requestNoContent("DELETE", path: "/api/auth/me")
+        api.clearSessionCookie()
     }
 
     func checkSession() async -> User? {

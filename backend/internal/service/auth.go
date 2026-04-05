@@ -3,17 +3,41 @@ package service
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/oglimmer/coffee-diary-backend/internal/domain"
 	"github.com/oglimmer/coffee-diary-backend/internal/repository"
 )
 
 type AuthService struct {
-	userRepo *repository.UserRepository
+	userRepo    *repository.UserRepository
+	appleTokens *AppleTokenService
 }
 
-func NewAuthService(userRepo *repository.UserRepository) *AuthService {
-	return &AuthService{userRepo: userRepo}
+func NewAuthService(userRepo *repository.UserRepository, appleTokens *AppleTokenService) *AuthService {
+	return &AuthService{userRepo: userRepo, appleTokens: appleTokens}
+}
+
+// StoreAppleRefreshToken persists a refresh token obtained from Apple's token endpoint.
+func (s *AuthService) StoreAppleRefreshToken(ctx context.Context, userID int64, token string) error {
+	return s.userRepo.SetAppleRefreshToken(ctx, userID, token)
+}
+
+// DeleteAccount removes all user data and, for Apple sign-in users, revokes
+// their refresh token at Apple as required by App Store Review Guideline 5.1.1(v).
+func (s *AuthService) DeleteAccount(ctx context.Context, userID int64) error {
+	// Revoke Apple tokens first — if this fails we still proceed with local deletion
+	// (better to leave a stale Apple token than to leave the user's data behind).
+	refreshToken, err := s.userRepo.GetAppleRefreshToken(ctx, userID)
+	if err != nil {
+		slog.Warn("failed to read Apple refresh token for revocation", "userID", userID, "error", err)
+	} else if refreshToken != "" {
+		if err := s.appleTokens.Revoke(ctx, refreshToken); err != nil {
+			slog.Error("failed to revoke Apple refresh token", "userID", userID, "error", err)
+		}
+	}
+
+	return s.userRepo.DeleteUserCascade(ctx, userID)
 }
 
 // FindByID returns a user by their database ID.

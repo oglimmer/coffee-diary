@@ -65,7 +65,11 @@ final class AuthViewModel {
                 }
             }
 
-            try await authService.loginWithApple(identityToken: identityToken, fullName: fullName)
+            try await authService.loginWithApple(
+                identityToken: identityToken,
+                authorizationCode: credential.authorizationCode,
+                fullName: fullName
+            )
             user = await authService.checkSession()
         } catch {
             self.error = LoginError(
@@ -78,5 +82,18 @@ final class AuthViewModel {
     func logout() async {
         await authService.logout()
         user = nil
+    }
+
+    func deleteAccount() async {
+        error = nil
+        do {
+            try await authService.deleteAccount()
+            user = nil
+        } catch {
+            self.error = LoginError(
+                message: "Account deletion failed. Please try again.",
+                detail: error.localizedDescription
+            )
+        }
     }
 }

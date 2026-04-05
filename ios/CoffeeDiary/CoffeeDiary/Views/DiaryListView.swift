@@ -7,6 +7,7 @@ struct DiaryListView: View {
     @State private var showNewEntry = false
     @State private var editingEntry: DiaryEntry?
     @State private var showSettings = false
+    @State private var showDeleteAccountConfirm = false
 
     var body: some View {
         NavigationStack {
@@ -38,6 +39,11 @@ struct DiaryListView: View {
                             Task { await authViewModel.logout() }
                         } label: {
                             Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                        Button(role: .destructive) {
+                            showDeleteAccountConfirm = true
+                        } label: {
+                            Label("Delete Account", systemImage: "person.crop.circle.badge.xmark")
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -82,6 +88,25 @@ struct DiaryListView: View {
                 Button("OK") { viewModel.error = nil }
             } message: {
                 Text(viewModel.error ?? "")
+            }
+            .alert("Delete Account?", isPresented: $showDeleteAccountConfirm) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete Account", role: .destructive) {
+                    Task { await authViewModel.deleteAccount() }
+                }
+            } message: {
+                Text("This will permanently delete your account, all your diary entries, coffees, and sieves. This action cannot be undone.")
+            }
+            .alert(
+                "Account Deletion Failed",
+                isPresented: .init(
+                    get: { authViewModel.error != nil },
+                    set: { if !$0 { authViewModel.error = nil } }
+                )
+            ) {
+                Button("OK") { authViewModel.error = nil }
+            } message: {
+                Text(authViewModel.error?.detail ?? authViewModel.error?.message ?? "")
             }
         }
     }

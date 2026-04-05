@@ -109,13 +109,14 @@ func main() {
 	entryRepo := repository.NewDiaryEntryRepository(db)
 
 	// Services
-	authSvc := service.NewAuthService(userRepo)
+	appleTokenSvc := service.NewAppleTokenService(cfg.AppleClientID, cfg.AppleTeamID, cfg.AppleKeyID, cfg.ApplePrivateKey)
+	authSvc := service.NewAuthService(userRepo, appleTokenSvc)
 	coffeeSvc := service.NewCoffeeService(coffeeRepo)
 	sieveSvc := service.NewSieveService(sieveRepo)
 	entrySvc := service.NewDiaryEntryService(entryRepo, coffeeRepo, sieveRepo)
 
 	// Handlers
-	authH := handler.NewAuthHandler(authSvc, oauth2Config, verifier, appleVerifier, store, cfg.FrontendURL, providerClaims.EndSessionEndpoint)
+	authH := handler.NewAuthHandler(authSvc, appleTokenSvc, oauth2Config, verifier, appleVerifier, store, cfg.FrontendURL, providerClaims.EndSessionEndpoint)
 	coffeeH := handler.NewCoffeeHandler(coffeeSvc)
 	sieveH := handler.NewSieveHandler(sieveSvc)
 	entryH := handler.NewDiaryEntryHandler(entrySvc)
@@ -127,13 +128,16 @@ func main() {
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(handler.SecurityHeaders)
 
-	// Auth endpoints (public)
+	// Auth endpoints
 	r.Route("/api/auth", func(r chi.Router) {
+		// Public
 		r.Get("/login", authH.Login)
 		r.Get("/callback", authH.Callback)
 		r.Get("/logout", authH.Logout)
 		r.Post("/apple-callback", authH.AppleCallback)
 		r.Get("/me", authH.Me)
+		// Protected: account deletion
+		r.With(handler.SessionAuth(store)).Delete("/me", authH.DeleteAccount)
 	})
 
 	// Protected API endpoints

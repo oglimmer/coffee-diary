@@ -21,6 +21,7 @@ import (
 
 type AuthHandler struct {
 	authService        *service.AuthService
+	appleTokens        *service.AppleTokenService
 	oauth2Config       *oauth2.Config
 	verifier           *oidc.IDTokenVerifier
 	appleVerifier      *oidc.IDTokenVerifier
@@ -31,6 +32,7 @@ type AuthHandler struct {
 
 func NewAuthHandler(
 	authService *service.AuthService,
+	appleTokens *service.AppleTokenService,
 	oauth2Config *oauth2.Config,
 	verifier *oidc.IDTokenVerifier,
 	appleVerifier *oidc.IDTokenVerifier,
@@ -40,6 +42,7 @@ func NewAuthHandler(
 ) *AuthHandler {
 	return &AuthHandler{
 		authService:        authService,
+		appleTokens:        appleTokens,
 		oauth2Config:       oauth2Config,
 		verifier:           verifier,
 		appleVerifier:      appleVerifier,
@@ -170,8 +173,9 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 // AppleCallback handles Sign in with Apple token verification.
 func (h *AuthHandler) AppleCallback(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		IdentityToken string `json:"identityToken"`
-		FullName      string `json:"fullName"`
+		IdentityToken     string `json:"identityToken"`
+		AuthorizationCode string `json:"authorizationCode"`
+		FullName          string `json:"fullName"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		apperr.WriteError(w, apperr.BadRequest("Invalid request body"))
@@ -217,6 +221,20 @@ func (h *AuthHandler) AppleCallback(w http.ResponseWriter, r *http.Request) {
 		slog.Error("failed to find/create user", "error", err)
 		apperr.WriteError(w, apperr.InternalError())
 		return
+	}
+
+	// Exchange the authorization code for a refresh token so we can revoke it
+	// when the user deletes their account (App Store Guideline 5.1.1(v)).
+	if req.AuthorizationCode != "" && h.appleTokens.Configured() {
+		refreshToken, err := h.appleTokens.ExchangeCode(r.Context(), req.AuthorizationCode)
+		if err != nil {
+			slog.Warn("Apple code exchange failed — account deletion revocation will be skipped",
+				"userID", user.ID, "error", err)
+		} else if refreshToken != "" {
+			if err := h.authService.StoreAppleRefreshToken(r.Context(), user.ID, refreshToken); err != nil {
+				slog.Warn("failed to persist Apple refresh token", "userID", user.ID, "error", err)
+			}
+		}
 	}
 
 	sess, _ := h.store.Get(r, sessionName)
@@ -295,6 +313,37 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		ID:       user.ID,
 		Username: user.Username,
 	})
+}
+
+// DeleteAccount permanently removes the authenticated user's account and all their data.
+// Required by App Store Review Guideline 5.1.1(v). For Sign in with Apple users this
+// also revokes the refresh token at Apple.
+func (h *AuthHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
+	sess, err := h.store.Get(r, sessionName)
+	if err != nil {
+		apperr.WriteError(w, apperr.Unauthorized("Authentication required"))
+		return
+	}
+	uid, ok := sess.Values["userID"].(int64)
+	if !ok {
+		apperr.WriteError(w, apperr.Unauthorized("Authentication required"))
+		return
+	}
+
+	if err := h.authService.DeleteAccount(r.Context(), uid); err != nil {
+		slog.Error("failed to delete account", "userID", uid, "error", err)
+		apperr.WriteError(w, apperr.InternalError())
+		return
+	}
+
+	// Invalidate the session cookie.
+	sess.Options.MaxAge = -1
+	if err := sess.Save(r, w); err != nil {
+		slog.Warn("failed to clear session after account deletion", "error", err)
+	}
+
+	slog.Info("user account deleted", "userID", uid)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func generateState() (string, error) {

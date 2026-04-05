@@ -49,6 +49,15 @@ struct LoginView: View {
             .tint(.brown)
             .controlSize(.large)
 
+            HStack(spacing: 4) {
+                Text("By signing in you agree to our")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Link("Privacy Policy",
+                     destination: URL(string: "https://coffee.oglimmer.com/privacy")!)
+                    .font(.caption2)
+            }
+
             if let error = authViewModel.error {
                 VStack(spacing: 6) {
                     Text(error.message)

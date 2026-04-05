@@ -29,6 +29,9 @@ type Config struct {
 	OIDCRedirectURL  string
 	FrontendURL      string
 	AppleClientID    string
+	AppleTeamID      string
+	AppleKeyID       string
+	ApplePrivateKey  string
 }
 
 // sensitive keys whose values should be masked in log output
@@ -37,6 +40,7 @@ var sensitiveKeys = map[string]bool{
 	"OIDC_CLIENT_SECRET": true,
 	"SESSION_SECRET":   true,
 	"ACTUATOR_PASSWORD": true,
+	"APPLE_PRIVATE_KEY": true,
 }
 
 func Load() *Config {
@@ -61,6 +65,9 @@ func Load() *Config {
 		{"OIDC_REDIRECT_URL", "http://localhost:8080/api/auth/callback", false},
 		{"FRONTEND_URL", "http://localhost:5173", false},
 		{"APPLE_CLIENT_ID", "com.oglimmer.CoffeeDiary", false},
+		{"APPLE_TEAM_ID", "", false},
+		{"APPLE_KEY_ID", "", false},
+		{"APPLE_PRIVATE_KEY", "", false},
 	}
 
 	values := make(map[string]string, len(entries))
@@ -114,6 +121,9 @@ func Load() *Config {
 		OIDCRedirectURL:  values["OIDC_REDIRECT_URL"],
 		FrontendURL:      values["FRONTEND_URL"],
 		AppleClientID:    values["APPLE_CLIENT_ID"],
+		AppleTeamID:      values["APPLE_TEAM_ID"],
+		AppleKeyID:       values["APPLE_KEY_ID"],
+		ApplePrivateKey:  values["APPLE_PRIVATE_KEY"],
 	}
 }
 
