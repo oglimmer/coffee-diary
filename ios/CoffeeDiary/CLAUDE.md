@@ -25,7 +25,7 @@ Open `CoffeeDiary.xcodeproj` in Xcode for development, previews, and running on 
 - **Deployment target:** iOS 26.4 (set in project, targeting iOS 17+ at runtime)
 - **Swift 5** with `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and `SWIFT_APPROACHABLE_CONCURRENCY = YES`
 - **No SPM packages or CocoaPods** currently — pure Apple frameworks only
-- Portrait orientation on iPhone, all orientations on iPad
+- Portrait only on iPhone, all orientations on iPad (enables Split View / multitasking)
 
 ## Architecture
 
