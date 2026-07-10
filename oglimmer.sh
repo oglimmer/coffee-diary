@@ -41,6 +41,7 @@ RELEASE_MODE=false
 SHOW_VERSIONS=false
 E2E_MODE=false
 COPY_DB_MODE=false
+TEST_MODE=false
 
 # Color output (only if terminal supports it)
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1; then
@@ -106,6 +107,7 @@ COMMANDS:
     build               Build and deploy components (default)
     release             Create a new release with version bumping and build
     show                Show current backend and frontend versions
+    test                Run backend + frontend tests (non-interactive; works on a fresh clone)
     e2e                 Run Playwright e2e tests (starts DB + backend, runs tests, tears down)
     copy-db             Copy production database to local Docker Compose MariaDB
 
@@ -138,6 +140,7 @@ EXAMPLES:
     ${SCRIPT_NAME} build -b -v                              # Build and deploy backend with verbose output
     ${SCRIPT_NAME} release                                  # Create a new release with version bump and build
     ${SCRIPT_NAME} show                                     # Show current versions
+    ${SCRIPT_NAME} test                                     # Run backend + frontend tests
     ${SCRIPT_NAME} e2e                                      # Run e2e tests with fresh DB
     ${SCRIPT_NAME} copy-db                                   # Copy prod DB to local (requires PROD_DB_PASSWORD)
     ${SCRIPT_NAME} build --registries my-registry.com       # Use custom registry
@@ -179,6 +182,10 @@ parse_args() {
                 ;;
             show)
                 SHOW_VERSIONS=true
+                shift
+                ;;
+            test)
+                TEST_MODE=true
                 shift
                 ;;
             e2e)
@@ -680,6 +687,72 @@ execute_release() {
     log_success "Release v$new_version complete. Backend is now $snapshot."
 }
 
+# Execute test process: run backend and frontend tests non-interactively.
+# Designed to work on a fresh clone (dependencies are fetched on demand) and to
+# never prompt or start long-running servers, so it is safe for CI/pre-push use.
+# Both suites always run so a single invocation reports every failure; the
+# command exits non-zero if either suite fails.
+execute_test() {
+    local backend_rc=0 frontend_rc=0
+
+    echo -e "${BOLD}=== Running tests ===${RESET}"
+    echo
+
+    # --- Backend: go vet + go test (modules are downloaded on demand) ---
+    if command -v go >/dev/null 2>&1; then
+        log_info "Backend: go vet + go test ./..."
+        if (cd "$BACKEND_DIR" && go vet ./... && go test ./...); then
+            log_success "Backend tests passed"
+        else
+            backend_rc=$?
+            log_error "Backend tests failed (exit code: $backend_rc)"
+        fi
+    else
+        log_error "Go is not installed; cannot run backend tests"
+        backend_rc=127
+    fi
+
+    echo
+
+    # --- Frontend: clean install + type-check + production build ---
+    # There is no unit-test runner; type-check + build is the compile-level
+    # verification. `npm ci` is non-interactive and works from a fresh clone.
+    if command -v npm >/dev/null 2>&1; then
+        log_info "Frontend: npm ci + npm run build (type-check + vite build)..."
+        if (cd "$FRONTEND_DIR" && npm ci && npm run build); then
+            log_success "Frontend tests passed"
+        else
+            frontend_rc=$?
+            log_error "Frontend tests failed (exit code: $frontend_rc)"
+        fi
+    else
+        log_error "npm is not installed; cannot run frontend tests"
+        frontend_rc=127
+    fi
+
+    # --- Summary ---
+    echo
+    echo -e "${BOLD}=== Test Summary ===${RESET}"
+    if [[ $backend_rc -eq 0 ]]; then
+        echo -e "Backend:  ${GREEN}PASS${RESET}"
+    else
+        echo -e "Backend:  ${RED}FAIL${RESET}"
+    fi
+    if [[ $frontend_rc -eq 0 ]]; then
+        echo -e "Frontend: ${GREEN}PASS${RESET}"
+    else
+        echo -e "Frontend: ${RED}FAIL${RESET}"
+    fi
+
+    if [[ $backend_rc -ne 0 || $frontend_rc -ne 0 ]]; then
+        return 1
+    fi
+
+    echo
+    log_success "All tests passed"
+    return 0
+}
+
 # Execute e2e test process
 execute_e2e() {
     local db_container="coffee-diary-e2e-db"
@@ -833,6 +906,11 @@ main() {
     if [[ "$SHOW_VERSIONS" == true ]]; then
         show_versions
         exit 0
+    fi
+
+    if [[ "$TEST_MODE" == true ]]; then
+        execute_test
+        exit $?
     fi
 
     if [[ "$E2E_MODE" == true ]]; then
