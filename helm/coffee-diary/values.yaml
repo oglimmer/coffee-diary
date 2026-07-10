@@ -8,7 +8,7 @@ replicaCount: 1
 backend:
   name: api
   image:
-    repository: registry.oglimmer.com/coffee-diary-backend
+    repository: ghcr.io/oglimmer/coffee-diary-backend
     pullPolicy: Always
     tag: "latest"
 
@@ -28,7 +28,7 @@ backend:
 frontend:
   name: web
   image:
-    repository: registry.oglimmer.com/coffee-diary-frontend
+    repository: ghcr.io/oglimmer/coffee-diary-frontend
     pullPolicy: Always
     tag: "latest"
 
@@ -116,5 +116,7 @@ tolerations: []
 affinity: {}
 
 # Image pull secrets
-imagePullSecrets:
-  - name: oglimmerregistrykey
+# Images live in ghcr.io/oglimmer as public packages, so no pull secret is
+# needed. If the packages are made private, add a ghcr dockerconfigjson secret
+# here (e.g. `- name: ghcr-pull`).
+imagePullSecrets: []
