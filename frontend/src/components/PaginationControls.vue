@@ -41,7 +41,7 @@ function goTo(page: number) {
   }
 }
 
-const pageSizeOptions = [25, 50, 75, 100]
+const pageSizeOptions = [10, 25, 50, 75, 100]
 
 function onPageSizeChange(event: Event) {
   const value = Number((event.target as HTMLSelectElement).value)

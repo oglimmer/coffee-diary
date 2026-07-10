@@ -16,7 +16,7 @@ const entries = ref<DiaryEntry[]>([])
 const page = ref(0)
 const totalPages = ref(0)
 const totalElements = ref(0)
-const pageSize = ref(25)
+const pageSize = ref(10)
 const loading = ref(false)
 
 // Filters

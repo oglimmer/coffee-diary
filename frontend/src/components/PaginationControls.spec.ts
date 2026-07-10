@@ -79,21 +79,21 @@ describe('PaginationControls', () => {
     expect(wrapper.emitted('update:currentPage')).toBeUndefined()
   })
 
-  it('renders the page-size dropdown with options 25/50/75/100 even for a single page', () => {
+  it('renders the page-size dropdown with options 10/25/50/75/100 even for a single page', () => {
     const wrapper = mount(PaginationControls, {
-      props: { currentPage: 0, totalPages: 1, pageSize: 25 },
+      props: { currentPage: 0, totalPages: 1, pageSize: 10 },
     })
     expect(wrapper.find('.page-size-select').exists()).toBe(true)
     const options = wrapper.findAll('.page-size-select option').map((o) => o.text())
-    expect(options).toEqual(['25', '50', '75', '100'])
+    expect(options).toEqual(['10', '25', '50', '75', '100'])
   })
 
   it('defaults the dropdown selection to the pageSize prop', () => {
     const wrapper = mount(PaginationControls, {
-      props: { currentPage: 0, totalPages: 3, pageSize: 25 },
+      props: { currentPage: 0, totalPages: 3, pageSize: 10 },
     })
     const select = wrapper.find('.page-size-select').element as HTMLSelectElement
-    expect(select.value).toBe('25')
+    expect(select.value).toBe('10')
   })
 
   it('emits page-size-change with the numeric value on selection', async () => {
