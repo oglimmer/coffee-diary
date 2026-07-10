@@ -79,6 +79,15 @@ describe('PaginationControls', () => {
     expect(wrapper.emitted('update:currentPage')).toBeUndefined()
   })
 
+  it('gives the prev and next arrows descriptive aria-labels', () => {
+    const wrapper = mount(PaginationControls, {
+      props: { currentPage: 0, totalPages: 5, pageSize: 25 },
+    })
+    const buttons = wrapper.findAll('.page-btn')
+    expect(buttons[0].attributes('aria-label')).toBe('Previous page')
+    expect(buttons[buttons.length - 1].attributes('aria-label')).toBe('Next page')
+  })
+
   it('renders the page-size dropdown with options 10/25/50/75/100 even for a single page', () => {
     const wrapper = mount(PaginationControls, {
       props: { currentPage: 0, totalPages: 1, pageSize: 10 },
