@@ -13,20 +13,20 @@ import (
 func TestToResponse(t *testing.T) {
 	now := time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC)
 	entry := domain.DiaryEntry{
-		ID:          1,
-		UserID:      2,
-		DateTime:    now,
-		SieveID:     sql.NullInt64{Int64: 5, Valid: true},
-		SieveName:   sql.NullString{String: "IMS", Valid: true},
-		Temperature: 93,
-		CoffeeID:    sql.NullInt64{Int64: 3, Valid: true},
-		CoffeeName:  sql.NullString{String: "Ethiopian", Valid: true},
-		GrindSize:   sql.NullFloat64{Float64: 5.0, Valid: true},
-		InputWeight: sql.NullFloat64{Float64: 18.0, Valid: true},
+		ID:           1,
+		UserID:       2,
+		DateTime:     now,
+		SieveID:      sql.NullInt64{Int64: 5, Valid: true},
+		SieveName:    sql.NullString{String: "IMS", Valid: true},
+		Temperature:  93,
+		CoffeeID:     sql.NullInt64{Int64: 3, Valid: true},
+		CoffeeName:   sql.NullString{String: "Ethiopian", Valid: true},
+		GrindSize:    sql.NullFloat64{Float64: 5.0, Valid: true},
+		InputWeight:  sql.NullFloat64{Float64: 18.0, Valid: true},
 		OutputWeight: sql.NullFloat64{Float64: 36.0, Valid: true},
-		TimeSeconds: sql.NullInt64{Int64: 25, Valid: true},
-		Rating:      sql.NullInt64{Int64: 4, Valid: true},
-		Notes:       sql.NullString{String: "Great shot", Valid: true},
+		TimeSeconds:  sql.NullInt64{Int64: 25, Valid: true},
+		Rating:       sql.NullInt64{Int64: 4, Valid: true},
+		Notes:        sql.NullString{String: "Great shot", Valid: true},
 	}
 
 	resp := toResponse(entry)

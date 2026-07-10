@@ -76,15 +76,15 @@ func (s *DiaryEntryService) Create(ctx context.Context, userID int64, req domain
 	}
 
 	entry := &domain.DiaryEntry{
-		UserID:      userID,
-		DateTime:    req.DateTime.Time,
-		Temperature: temp,
-		GrindSize:   toNullFloat64(req.GrindSize),
-		InputWeight: toNullFloat64(req.InputWeight),
+		UserID:       userID,
+		DateTime:     req.DateTime.Time,
+		Temperature:  temp,
+		GrindSize:    toNullFloat64(req.GrindSize),
+		InputWeight:  toNullFloat64(req.InputWeight),
 		OutputWeight: toNullFloat64(req.OutputWeight),
-		TimeSeconds: toNullInt64FromInt(req.TimeSeconds),
-		Rating:      toNullInt64FromInt(req.Rating),
-		Notes:       toNullString(req.Notes),
+		TimeSeconds:  toNullInt64FromInt(req.TimeSeconds),
+		Rating:       toNullInt64FromInt(req.Rating),
+		Notes:        toNullString(req.Notes),
 	}
 
 	if req.SieveID != nil {

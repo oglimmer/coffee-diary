@@ -21,10 +21,10 @@ func NewDiaryEntryRepository(db *sql.DB) *DiaryEntryRepository {
 
 type DiaryEntryFilter struct {
 	UserID    int64
-	CoffeeID *int64
-	SieveID  *int64
-	DateFrom *time.Time
-	DateTo   *time.Time
+	CoffeeID  *int64
+	SieveID   *int64
+	DateFrom  *time.Time
+	DateTo    *time.Time
 	RatingMin *int
 }
 

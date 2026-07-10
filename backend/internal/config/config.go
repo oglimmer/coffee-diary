@@ -15,7 +15,7 @@ type Config struct {
 	DBName           string
 	DBUser           string
 	DBPassword       string
-	ActuatorUsername  string
+	ActuatorUsername string
 	ActuatorPassword string
 	AppName          string
 	AppVersion       string
@@ -36,11 +36,11 @@ type Config struct {
 
 // sensitive keys whose values should be masked in log output
 var sensitiveKeys = map[string]bool{
-	"DB_PASSWORD":      true,
+	"DB_PASSWORD":        true,
 	"OIDC_CLIENT_SECRET": true,
-	"SESSION_SECRET":   true,
-	"ACTUATOR_PASSWORD": true,
-	"APPLE_PRIVATE_KEY": true,
+	"SESSION_SECRET":     true,
+	"ACTUATOR_PASSWORD":  true,
+	"APPLE_PRIVATE_KEY":  true,
 }
 
 func Load() *Config {
@@ -107,7 +107,7 @@ func Load() *Config {
 		DBName:           values["DB_NAME"],
 		DBUser:           values["DB_USER"],
 		DBPassword:       values["DB_PASSWORD"],
-		ActuatorUsername:  values["ACTUATOR_USERNAME"],
+		ActuatorUsername: values["ACTUATOR_USERNAME"],
 		ActuatorPassword: values["ACTUATOR_PASSWORD"],
 		AppName:          values["APP_NAME"],
 		AppVersion:       values["APP_VERSION"],

@@ -116,7 +116,7 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	var claims struct {
 		Sub               string `json:"sub"`
-		PreferredUsername  string `json:"preferred_username"`
+		PreferredUsername string `json:"preferred_username"`
 		Email             string `json:"email"`
 	}
 	if err := idToken.Claims(&claims); err != nil {

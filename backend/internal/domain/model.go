@@ -147,16 +147,16 @@ type SieveRequest struct {
 }
 
 type DiaryEntryRequest struct {
-	DateTime    LocalDateTime  `json:"dateTime"`
-	SieveID     *int64         `json:"sieveId"`
-	Temperature *int           `json:"temperature"`
-	CoffeeID    *int64         `json:"coffeeId"`
-	GrindSize   *float64       `json:"grindSize"`
-	InputWeight *float64       `json:"inputWeight"`
+	DateTime     LocalDateTime `json:"dateTime"`
+	SieveID      *int64        `json:"sieveId"`
+	Temperature  *int          `json:"temperature"`
+	CoffeeID     *int64        `json:"coffeeId"`
+	GrindSize    *float64      `json:"grindSize"`
+	InputWeight  *float64      `json:"inputWeight"`
 	OutputWeight *float64      `json:"outputWeight"`
-	TimeSeconds *int           `json:"timeSeconds"`
-	Rating      *int           `json:"rating"`
-	Notes       *string        `json:"notes"`
+	TimeSeconds  *int          `json:"timeSeconds"`
+	Rating       *int          `json:"rating"`
+	Notes        *string       `json:"notes"`
 }
 
 // --- Response DTOs ---
