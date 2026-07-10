@@ -9,14 +9,14 @@ function buttonLabels(wrapper: ReturnType<typeof mount>) {
 describe('PaginationControls', () => {
   it('renders nothing when there is a single page', () => {
     const wrapper = mount(PaginationControls, {
-      props: { currentPage: 0, totalPages: 1 },
+      props: { currentPage: 0, totalPages: 1, pageSize: 25 },
     })
     expect(wrapper.find('nav').exists()).toBe(false)
   })
 
   it('lists every page (1-indexed labels) when total <= 7', () => {
     const wrapper = mount(PaginationControls, {
-      props: { currentPage: 0, totalPages: 5 },
+      props: { currentPage: 0, totalPages: 5, pageSize: 25 },
     })
     // prev arrow + 5 numbered pages + next arrow
     expect(buttonLabels(wrapper)).toEqual(['←', '1', '2', '3', '4', '5', '→'])
@@ -25,7 +25,7 @@ describe('PaginationControls', () => {
 
   it('shows a trailing ellipsis near the start of a long range', () => {
     const wrapper = mount(PaginationControls, {
-      props: { currentPage: 0, totalPages: 10 },
+      props: { currentPage: 0, totalPages: 10, pageSize: 25 },
     })
     // first, current window, ellipsis, last
     expect(buttonLabels(wrapper)).toEqual(['←', '1', '2', '10', '→'])
@@ -34,7 +34,7 @@ describe('PaginationControls', () => {
 
   it('shows both ellipses when the current page is in the middle', () => {
     const wrapper = mount(PaginationControls, {
-      props: { currentPage: 5, totalPages: 12 },
+      props: { currentPage: 5, totalPages: 12, pageSize: 25 },
     })
     expect(buttonLabels(wrapper)).toEqual(['←', '1', '5', '6', '7', '12', '→'])
     expect(wrapper.findAll('.page-ellipsis')).toHaveLength(2)
@@ -42,19 +42,19 @@ describe('PaginationControls', () => {
 
   it('marks the current page active', () => {
     const wrapper = mount(PaginationControls, {
-      props: { currentPage: 2, totalPages: 5 },
+      props: { currentPage: 2, totalPages: 5, pageSize: 25 },
     })
     const active = wrapper.find('.page-btn.active')
     expect(active.text()).toBe('3')
   })
 
   it('disables the prev arrow on the first page and next arrow on the last', () => {
-    const first = mount(PaginationControls, { props: { currentPage: 0, totalPages: 5 } })
+    const first = mount(PaginationControls, { props: { currentPage: 0, totalPages: 5, pageSize: 25 } })
     const buttons = first.findAll('.page-btn')
     expect(buttons[0].attributes('disabled')).toBeDefined() // prev
     expect(buttons[buttons.length - 1].attributes('disabled')).toBeUndefined() // next
 
-    const last = mount(PaginationControls, { props: { currentPage: 4, totalPages: 5 } })
+    const last = mount(PaginationControls, { props: { currentPage: 4, totalPages: 5, pageSize: 25 } })
     const lastButtons = last.findAll('.page-btn')
     expect(lastButtons[0].attributes('disabled')).toBeUndefined()
     expect(lastButtons[lastButtons.length - 1].attributes('disabled')).toBeDefined()
@@ -62,7 +62,7 @@ describe('PaginationControls', () => {
 
   it('emits update:currentPage with the zero-based index on click', async () => {
     const wrapper = mount(PaginationControls, {
-      props: { currentPage: 0, totalPages: 5 },
+      props: { currentPage: 0, totalPages: 5, pageSize: 25 },
     })
     // Click the button labelled "3" -> zero-based page 2
     const target = wrapper.findAll('.page-btn').find((b) => b.text() === '3')!
@@ -72,10 +72,35 @@ describe('PaginationControls', () => {
 
   it('does not emit when navigating out of bounds', async () => {
     const wrapper = mount(PaginationControls, {
-      props: { currentPage: 0, totalPages: 5 },
+      props: { currentPage: 0, totalPages: 5, pageSize: 25 },
     })
     // prev arrow while on first page -> goTo(-1), rejected by guard
     await wrapper.findAll('.page-btn')[0].trigger('click')
     expect(wrapper.emitted('update:currentPage')).toBeUndefined()
+  })
+
+  it('renders the page-size dropdown with options 25/50/75/100 even for a single page', () => {
+    const wrapper = mount(PaginationControls, {
+      props: { currentPage: 0, totalPages: 1, pageSize: 25 },
+    })
+    const options = wrapper.findAll('.page-size-select option').map((o) => o.text())
+    expect(options).toEqual(['25', '50', '75', '100'])
+  })
+
+  it('defaults the dropdown selection to the pageSize prop', () => {
+    const wrapper = mount(PaginationControls, {
+      props: { currentPage: 0, totalPages: 3, pageSize: 25 },
+    })
+    const select = wrapper.find('.page-size-select').element as HTMLSelectElement
+    expect(select.value).toBe('25')
+  })
+
+  it('emits page-size-change with the numeric value on selection', async () => {
+    const wrapper = mount(PaginationControls, {
+      props: { currentPage: 0, totalPages: 3, pageSize: 25 },
+    })
+    const select = wrapper.find('.page-size-select')
+    await select.setValue('50')
+    expect(wrapper.emitted('page-size-change')).toEqual([[50]])
   })
 })
