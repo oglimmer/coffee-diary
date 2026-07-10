@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.app.json",
+  "include": ["env.d.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
+  "exclude": [],
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.vitest.tsbuildinfo",
+
+    // Node + Vitest globals for test files (DOM libs inherited from tsconfig.app.json).
+    "types": ["node", "vitest/globals"],
+
+    // Test assertions frequently index into arrays returned by test utils;
+    // the extra-safety flag from the app config produces noise there.
+    "noUncheckedIndexedAccess": false
+  }
+}

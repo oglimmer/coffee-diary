@@ -55,7 +55,8 @@ docker compose up --build                 # MariaDB (3306) + Backend (8080) + Fr
 
 ### Testing
 - **Backend tests:** Run with `go test ./...` from `backend/`.
-- **No frontend tests** currently exist.
+- **Frontend unit tests:** Vitest + Vue Test Utils (jsdom). Run `npm run test:unit` (or `test:unit:watch`) from `frontend/`. Specs are colocated as `src/**/*.spec.ts` and type-checked via `tsconfig.vitest.json`.
+- **Frontend e2e tests:** Playwright in `frontend/e2e/`. Run `npm run test:e2e`.
 
 ### Deployment
 - **CI:** GitHub Actions builds Docker images on push to main, pushes to registry.oglimmer.com.
