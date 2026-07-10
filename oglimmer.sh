@@ -714,12 +714,13 @@ execute_test() {
 
     echo
 
-    # --- Frontend: clean install + type-check + production build ---
-    # There is no unit-test runner; type-check + build is the compile-level
-    # verification. `npm ci` is non-interactive and works from a fresh clone.
+    # --- Frontend: clean install + unit tests + type-check + production build ---
+    # vitest unit tests first (fast, catches logic regressions), then type-check
+    # + build for compile-level verification. `npm ci` is non-interactive and
+    # works from a fresh clone.
     if command -v npm >/dev/null 2>&1; then
-        log_info "Frontend: npm ci + npm run build (type-check + vite build)..."
-        if (cd "$FRONTEND_DIR" && npm ci && npm run build); then
+        log_info "Frontend: npm ci + npm run test:unit + npm run build..."
+        if (cd "$FRONTEND_DIR" && npm ci && npm run test:unit && npm run build); then
             log_success "Frontend tests passed"
         else
             frontend_rc=$?
