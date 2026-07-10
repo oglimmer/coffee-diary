@@ -16,6 +16,7 @@ const entries = ref<DiaryEntry[]>([])
 const page = ref(0)
 const totalPages = ref(0)
 const totalElements = ref(0)
+const pageSize = ref(25)
 const loading = ref(false)
 
 // Filters
@@ -39,7 +40,7 @@ async function loadEntries() {
   try {
     const params: DiaryQueryParams = {
       page: page.value,
-      size: 15,
+      size: pageSize.value,
       sort: 'dateTime,desc',
     }
     if (dateFrom.value) params.dateFrom = dateFrom.value
@@ -76,6 +77,12 @@ function clearFilters() {
   coffeeFilter.value = ''
   sieveFilter.value = ''
   minRating.value = ''
+  page.value = 0
+  loadEntries()
+}
+
+function changePageSize(size: number) {
+  pageSize.value = size
   page.value = 0
   loadEntries()
 }
@@ -254,7 +261,9 @@ onMounted(() => {
       <PaginationControls
         :current-page="page"
         :total-pages="totalPages"
+        :page-size="pageSize"
         @update:current-page="page = $event"
+        @page-size-change="changePageSize"
       />
     </main>
 

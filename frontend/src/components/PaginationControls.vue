@@ -4,10 +4,12 @@ import { computed } from 'vue'
 const props = defineProps<{
   currentPage: number
   totalPages: number
+  pageSize: number
 }>()
 
 const emit = defineEmits<{
   'update:currentPage': [page: number]
+  'page-size-change': [size: number]
 }>()
 
 const pages = computed(() => {
@@ -38,45 +40,92 @@ function goTo(page: number) {
     emit('update:currentPage', page)
   }
 }
+
+const pageSizeOptions = [25, 50, 75, 100]
+
+function onPageSizeChange(event: Event) {
+  const value = Number((event.target as HTMLSelectElement).value)
+  emit('page-size-change', value)
+}
 </script>
 
 <template>
-  <nav v-if="totalPages > 1" class="pagination">
-    <button
-      class="page-btn"
-      :disabled="currentPage === 0"
-      @click="goTo(currentPage - 1)"
-    >
-      &larr;
-    </button>
-    <template v-for="(p, idx) in pages" :key="idx">
-      <span v-if="p === '...'" class="page-ellipsis">&middot;&middot;&middot;</span>
+  <div class="pagination-controls">
+    <nav v-if="totalPages > 1" class="pagination">
       <button
-        v-else
         class="page-btn"
-        :class="{ active: p === currentPage }"
-        @click="goTo(p as number)"
+        :disabled="currentPage === 0"
+        @click="goTo(currentPage - 1)"
       >
-        {{ (p as number) + 1 }}
+        &larr;
       </button>
-    </template>
-    <button
-      class="page-btn"
-      :disabled="currentPage >= totalPages - 1"
-      @click="goTo(currentPage + 1)"
-    >
-      &rarr;
-    </button>
-  </nav>
+      <template v-for="(p, idx) in pages" :key="idx">
+        <span v-if="p === '...'" class="page-ellipsis">&middot;&middot;&middot;</span>
+        <button
+          v-else
+          class="page-btn"
+          :class="{ active: p === currentPage }"
+          @click="goTo(p as number)"
+        >
+          {{ (p as number) + 1 }}
+        </button>
+      </template>
+      <button
+        class="page-btn"
+        :disabled="currentPage >= totalPages - 1"
+        @click="goTo(currentPage + 1)"
+      >
+        &rarr;
+      </button>
+    </nav>
+
+    <div class="page-size">
+      <label class="page-size-label">Per page</label>
+      <select class="page-size-select" :value="pageSize" @change="onPageSizeChange">
+        <option v-for="opt in pageSizeOptions" :key="opt" :value="opt">{{ opt }}</option>
+      </select>
+    </div>
+  </div>
 </template>
 
 <style scoped>
+.pagination-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.page-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-size-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.page-size-select {
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+}
+
 .pagination {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  margin-top: 28px;
 }
 
 .page-btn {
