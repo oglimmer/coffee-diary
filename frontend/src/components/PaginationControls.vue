@@ -54,6 +54,7 @@ function onPageSizeChange(event: Event) {
     <nav v-if="totalPages > 1" class="pagination">
       <button
         class="page-btn"
+        aria-label="Previous page"
         :disabled="currentPage === 0"
         @click="goTo(currentPage - 1)"
       >
@@ -72,6 +73,7 @@ function onPageSizeChange(event: Event) {
       </template>
       <button
         class="page-btn"
+        aria-label="Next page"
         :disabled="currentPage >= totalPages - 1"
         @click="goTo(currentPage + 1)"
       >
