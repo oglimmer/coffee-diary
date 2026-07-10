@@ -83,6 +83,7 @@ describe('PaginationControls', () => {
     const wrapper = mount(PaginationControls, {
       props: { currentPage: 0, totalPages: 1, pageSize: 25 },
     })
+    expect(wrapper.find('.page-size-select').exists()).toBe(true)
     const options = wrapper.findAll('.page-size-select option').map((o) => o.text())
     expect(options).toEqual(['25', '50', '75', '100'])
   })
